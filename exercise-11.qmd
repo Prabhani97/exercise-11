@@ -99,3 +99,62 @@ d
 ```
 
 ### Step 03
+
+Now I have to Log transform all of the other numeric variables,
+
+```{r}
+d <- d %>%
+  mutate(
+    across(
+      where(is.numeric),
+      ~ log(.x)
+    )
+  )
+d
+```
+
+```{r}
+summary(d)
+```
+
+### Step 04
+
+Here, regressing the guven variables on body mass, we have to perform na.action = na.exclude so that, if some rows have missing values, lm() usually drops them.
+
+1\) Regressing gestation on body mass
+
+```{r}
+m_gestation <- lm(`gestation(mo)` ~ `mass(g)`, data = d, na.action = na.exclude)
+```
+
+2\) Regressing weaning age on body mass
+
+```{r}
+m_weaning <- lm(`weaning(mo)` ~ `mass(g)`, data = d, na.action = na.exclude)
+```
+
+3\) Regressing AFR on body mass
+
+```{r}
+m_afr <- lm(`AFR(mo)` ~ `mass(g)`, data = d, na.action = na.exclude)
+```
+
+4\) Regressing maximum lifespan on body mass
+
+```{r}
+m_lifespan <- lm(`maxlife(mo)` ~ `mass(g)`, data = d, na.action = na.exclude)
+```
+
+5\) Regressig newborn mass on body mass
+
+```{r}
+m_newborn_mass <- lm(`newborn(g)` ~ `mass(g)`, data = d, na.action = na.exclude)
+```
+
+6\) Regressing weaning mass on body mass
+
+```{r}
+m_weanmass <- lm(`weanmass(g)` ~ `mass(g)`, data = d, na.action = na.exclude)
+```
+
+\
