@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Exercise 11"
 format: html
 editor: visual
 ---
@@ -173,4 +173,156 @@ d <- d %>%
 d
 ```
 
-\
+### Step 05
+
+01\) Plotting the residuals of max lifespan (relLife) in relation to Order
+
+First, I am going to make the medians of residual values in the descending order
+
+```{r}
+life_order_summary <- d %>%
+  group_by(order) %>%
+  summarise(
+    median_relLife = median(relLife, na.rm = TRUE),
+    mean_relLife = mean(relLife, na.rm = TRUE),
+    n = sum(!is.na(relLife))
+  ) %>%
+  arrange(desc(median_relLife))
+
+life_order_summary
+```
+
+Now I am going to plot the residuals of max lifespan (relLife) in relation to Order, but as the hint says I am going to remove any problematic rows, missing values.
+
+```{r}
+
+d_plot <- d %>%
+  filter(!is.na(order), !is.na(relLife)) %>%   
+  mutate(
+    order = as.factor(order),                
+    order = fct_reorder(order, relLife, .fun = median)
+  )
+
+```
+
+I have to plot against the log values of max lifespan, because in step 03 we converted all numerical values to their log values.
+
+```{r}
+ggplot(d_plot, aes(x = order, y = relLife)) +
+  geom_boxplot() +
+  
+  labs(
+    title = "Relative Maximum Lifespan by Mammalian Order",
+    x = "Order",
+    y = "Residual log(max lifespan)"
+  ) +
+  theme_bw()
+```
+
+This is harder for me to read because the x- axis pints with long names are interfering with each others. I will just flip this in order to read easily.
+
+```{r}
+ggplot(d_plot, aes(x = order, y = relLife)) +
+  geom_boxplot() +
+  coord_flip()
+  labs(
+    title = "Relative Maximum Lifespan by Mammalian Order",
+    x = "Order",
+    y = "Residual log(max lifespan)"
+  ) +
+  theme_bw()
+```
+
+Now I can read it easily,
+
+-   From what I can see in my plot, primates have the highest residual lifespan, indicating that species within this order tend to live substantially longer than expected for their body size
+
+-   Also, scandentia, xenartha, carnivora and sirenia also has high residual lifespans.
+
+-   Insectivora, Artiodactyla, and Macroscelidea tend to have lower residual lifespan values, suggesting shorter lifespans relative to body size.
+
+02\) Now plotting residuals of newborn mass (relNewbornMass) in relation to Order.
+
+```{r}
+newborn_order_summary <- d %>%
+  group_by(order) %>%
+  summarise(
+    median_relNewbornMass = median(relNewbornMass, na.rm = TRUE),
+    mean_relNewbornMass = mean(relNewbornMass, na.rm = TRUE),
+    n = sum(!is.na(relNewbornMass))
+  ) %>%
+  arrange(desc(median_relNewbornMass))
+```
+
+```{r}
+newborn_order_summary
+```
+
+Treating for missing values,
+
+```{r}
+d_newborn_plot <- d %>%
+  filter(!is.na(order), !is.na(relNewbornMass)) %>%   # remove missing values
+  mutate(
+    order = as.factor(order),
+    order = fct_reorder(order, relNewbornMass, .fun = median)
+  )
+```
+
+Then plotting
+
+```{r}
+ggplot(d_newborn_plot, aes(x = order, y = relNewbornMass)) +
+  geom_boxplot() +
+  coord_flip() +
+  labs(
+    title = "Relative Newborn Mass by Mammalian Order",
+    x = "Order",
+    y = "Residual log(newborn mass)"
+  ) +
+  theme_bw()
+```
+
+From what I can see, the highest residual newborn mass belongs to Mascroscelidea. Also Cetacea, Artiodactyla, Hyracoidea, Sirenia have relatively high residual newborn mass. These orders have larger newborns than expected for their body size.
+
+03\) Plotting residuals of weaning mass (relWeaningMass) in relation to Order
+
+```{r}
+weaningmass_order_summary <- d %>%
+  group_by(order) %>%
+  summarise(
+    median_relWeaningMass = median(relWeaningMass, na.rm = TRUE),
+    mean_relWeaningMass = mean(relWeaningMass, na.rm = TRUE),
+    n = sum(!is.na(relWeaningMass))
+  ) %>%
+  arrange(desc(median_relWeaningMass))
+
+weaningmass_order_summary
+
+```
+
+```{r}
+d_weanmass_plot <- d %>%
+  filter(!is.na(order), !is.na(relWeaningMass)) %>%   # remove missing values
+  mutate(
+    order = as.factor(order),
+    order = fct_reorder(order, relWeaningMass, .fun = median)
+  )
+
+```
+
+```{r}
+ggplot(d_weanmass_plot, aes(x = order, y = relWeaningMass)) +
+  geom_boxplot() +
+  coord_flip() +
+  labs(
+    title = "Relative Weaning Mass by Mammalian Order",
+    x = "Order",
+    y = "Residual log(weaning mass)"
+  ) +
+  theme_bw()
+```
+
+From what I can see, highest residual weaning mass belongs to Perissodactyla.It is clearly high than other orders.
+
+Catcea, Artidactyla, Primates and scandentia also have high resiidual weaning masses.These orders have larger weaning mass than expected for their body size
