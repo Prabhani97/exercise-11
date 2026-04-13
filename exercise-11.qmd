@@ -1,0 +1,101 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+## **Practice Model Selection**
+
+First, installing and loading the packages I need.
+
+```{r}
+install.packages("naniar")
+install.packages("MuMIn")
+install.packages("AICcmodavg")
+```
+
+```{r}
+library(tidyverse)
+library(skimr)     
+library(naniar)    
+library(MuMIn)       
+library(AICcmodavg)
+```
+
+Loading data,
+
+Since the data file this time is a .txt file, I will use read_tsv() function in R.
+
+```{r}
+f <- "https://raw.githubusercontent.com/difiore/ada-datasets/main/Mammal_lifehistories_v2.txt"
+d <- read_tsv(f)
+
+```
+
+For looking at the structure of the data,
+
+```{r}
+glimpse(d)
+names(d)
+```
+
+Identified,
+
+-   categorical variables: Order, Family, Genus, Species
+
+-   Numerical variables: mass(g), gestation(mo), newborn(g), "weaning(mo), wean mass(g), AFR(mo), max. life(mo), litter size, litters/year, refs
+
+Also, to do a quick exploratory data analysis,
+
+```{r}
+skim(d)
+```
+
+### Step 01
+
+First, i have to replace all -999 values with NA.
+
+I need to check what this is first, so I could use the skim(d) function above to see what this was actually,
+
+As suggested I am directly using the {naniar} package.
+
+```{r}
+d <- d %>%
+  replace_with_na_all(condition = ~ .x == -999)
+
+# Also i want to check missingness
+
+miss_var_summary(d)
+```
+
+### Step 02
+
+Now I have to ,
+
+-   Drop the variables **litter size** and **refs**.
+
+-   Rename the variable **max. life(mo)** to **maxlife(mo)**.
+
+-   Rename the variable **wean mass(g)** to **weanmass(g)**.
+
+First I need to drop variables "litter size" and refs
+
+```{r}
+d <- d %>%
+  select(-`litter size`, -refs)
+
+d
+```
+
+Now that it is done, I want to do the renamings,
+
+```{r}
+d <- d %>%
+  rename(
+    `maxlife(mo)` = `max. life(mo)`,
+    `weanmass(g)` = `wean mass(g)`
+  )
+d
+```
+
+### Step 03
