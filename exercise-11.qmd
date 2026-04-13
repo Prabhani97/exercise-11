@@ -157,4 +157,20 @@ m_newborn_mass <- lm(`newborn(g)` ~ `mass(g)`, data = d, na.action = na.exclude)
 m_weanmass <- lm(`weanmass(g)` ~ `mass(g)`, data = d, na.action = na.exclude)
 ```
 
+Next, adding the residuals to the dataframe as new variables, I am using resid() function to do this,
+
+```{r}
+d <- d %>%
+  mutate(
+    relGest = resid(m_gestation),
+    relWean = resid(m_weaning),
+    relAFR = resid(m_afr),
+    relLife = resid(m_lifespan),
+    relNewbornMass = resid(m_newborn_mass),
+    relWeaningMass = resid(m_weanmass)
+  )
+
+d
+```
+
 \
