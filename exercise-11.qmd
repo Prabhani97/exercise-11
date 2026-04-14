@@ -9,9 +9,9 @@ editor: visual
 First, installing and loading the packages I need.
 
 ```{r}
-install.packages("naniar")
-install.packages("MuMIn")
-install.packages("AICcmodavg")
+# install.packages("naniar")
+# install.packages("MuMIn")
+# install.packages("AICcmodavg")
 ```
 
 ```{r}
@@ -325,4 +325,232 @@ ggplot(d_weanmass_plot, aes(x = order, y = relWeaningMass)) +
 
 From what I can see, highest residual weaning mass belongs to Perissodactyla.It is clearly high than other orders.
 
-Catcea, Artidactyla, Primates and scandentia also have high resiidual weaning masses.These orders have larger weaning mass than expected for their body size
+Catcea, Artidactyla, Primates and scandentia also have high resiidual weaning masses.These orders have larger weaning mass than expected for their body size.
+
+### Step 06
+
+Now I have to run models and a model selection process to evaluate what (now log transformed) variables best predict,
+
+01\) maxlife(mo) from the predictors of : gestation(mo), newborn(g), weaning(mo), weanmass(g), litters/year, and overall body mass(g).
+
+02\) AFR(mo) from the predictors of: gestation(mo), newborn(g), weaning(mo), weanmass(g), litters/year, and overall body mass(g).
+
+But, before begining, I should first use drop_na() , because I will need complete cases for response plus all candidate predictors for fair AICc comparison. Every candidate model should use same rows.
+
+01\) I am first going to do this for, maximum lifespan model
+
+```{r}
+d_maxlife <- d %>%
+  drop_na(
+    `maxlife(mo)`,
+    `gestation(mo)`,
+    `newborn(g)`,
+    `weaning(mo)`,
+    `weanmass(g)`,
+    `litters/year`,
+    `mass(g)`
+  )
+d_maxlife
+```
+
+From what we learned at the class last time, now fitting for the global model, and then I can use dredge() in the {MuMIn} package, which explores subsets of agiven global model in an automated way.
+
+To do that, with dredge(), I first have to run aglobal model that includes all of the terms I want to consider and then run the function to fit subsets of that model without having to specify explicitly which submodels I want to run.
+
+So, first fitting for the global model,
+
+```{r}
+m_maxlife_global <- lm(
+  `maxlife(mo)` ~ `gestation(mo)` + `newborn(g)` + `weaning(mo)` +
+    `weanmass(g)` + `litters/year` + `mass(g)`,
+  data = d_maxlife,
+  na.action = na.fail
+)
+```
+
+Then runnig all subsets model selection based on AICc.
+
+```{r}
+maxlife_dredge <- dredge(m_maxlife_global)
+maxlife_dredge
+```
+
+Okay, this is hard for me to read, I have to convert this to a readable format, so converting to a data frame
+
+```{r}
+maxlife_table <- as.data.frame(maxlife_dredge)
+maxlife_table
+
+```
+
+I\) So, finding the best model now, it hsould be at the top of the dredge tabke with delta equal to zero.
+
+```{r}
+best_maxlife_model <- get.models(maxlife_dredge, 1)[[1]]
+summary(best_maxlife_model)
+formula(best_maxlife_model)
+```
+
+So, the best model overall based on AICc is
+
+**\`maxlife(mo)\` \~ \`gestation(mo)\` + \`litters/year\` + \`mass(g)\` + \`weaning(mo)\` + 1**
+
+ii\) To find how many models have a delta AICc of 4 or less, I can do the following,
+
+```{r}
+top_maxlife_table <- maxlife_table %>%
+  filter(delta <= 4)
+
+nrow(top_maxlife_table)
+
+top_maxlife_table
+```
+
+So, there are 5 models have a delta AICc of 4 or less.
+
+iii\) To find what variables, if any, appear in all of this set of “top” models, first I will get all the top models,
+
+```{r}
+top_maxlife_models <- get.models(maxlife_dredge, subset = delta <= 4)
+top_maxlife_models
+
+```
+
+iv\) Now I need to find what predictors appear commonly at every top model above,
+
+```{r}
+common_maxlife <- Reduce(
+  intersect,
+  lapply(top_maxlife_models, function(m) attr(terms(m), "term.labels"))
+)
+
+common_maxlife
+```
+
+So, \`gestation(mo)\` ,\`litters/year\`and \`weaning(mo)\` are the predictors commonly appearing at every top model.
+
+v\) Next calculating the model average for max life.
+
+```{r}
+maxlife_avg <- model.avg(maxlife_dredge, subset = delta <= 4, fit = TRUE)
+
+summary(maxlife_avg)
+
+```
+
+vi\) plotting it,
+
+```{r}
+confint(maxlife_avg)
+
+plot(maxlife_avg, full = TRUE)
+```
+
+02\) Then doing the pretty much same for the model of AFR(mo) from the predictors of: gestation(mo), newborn(g), weaning(mo), weanmass(g), litters/year, and overall body mass(g).
+
+Here also, before begining, I should first use drop_na() , because I will need complete cases for response plus all candidate predictors for fair AICc comparison. Every candidate model should use same rows.
+
+```{r}
+d_afr <- d %>%
+  drop_na(
+    `AFR(mo)`,
+    `gestation(mo)`,
+    `newborn(g)`,
+    `weaning(mo)`,
+    `weanmass(g)`,
+    `litters/year`,
+    `mass(g)`
+  )
+d_afr
+```
+
+Doing similarly to what I did in the first part, from what we learned at the class last time, now fitting for the global model,
+
+```{r}
+m_afr_global <- lm(
+  `AFR(mo)` ~ `gestation(mo)` + `newborn(g)` + `weaning(mo)` +
+    `weanmass(g)` + `litters/year` + `mass(g)`,
+  data = d_afr,
+  na.action = na.fail
+)
+```
+
+Now with dredge(), I will run the function to fit subsets of that model without having to specify explicitly which submodels I want to run.
+
+Then runnig all subsets model selection based on AICc.
+
+```{r}
+afr_dredge <- dredge(m_afr_global)
+afr_dredge
+```
+
+Okay, now too this is hard for me to read, I have to convert this to a readable format, so converting to a data frame
+
+```{r}
+afr_table <- as.data.frame(afr_dredge)
+afr_table
+```
+
+I\) So, finding the best model now, it should be at the top of the dredge tabke with delta equal to zero.
+
+```{r}
+best_afr_model <- get.models(afr_dredge, 1)[[1]]
+summary(best_afr_model)
+formula(best_afr_model)
+
+```
+
+So, the best model overall based on AICc is
+
+**AFR(mo)\` \~ \`gestation(mo)\` + \`litters/year\` + \`mass(g)\` + \`weaning(mo)\` + 1**
+
+ii\) To find how many models have a delta AICc of 4 or less, I can do the following,
+
+```{r}
+top_afr_table <- afr_table %>%
+  filter(delta <= 4)
+
+nrow(top_afr_table)
+
+top_afr_table
+```
+
+So, there are 7 models have a delta AICc of 4 or less.
+
+iii\) To find what variables, if any, appear in all of this set of “top” models, first I will get all the top models,
+
+```{r}
+top_afr_models <- get.models(afr_dredge, subset = delta <= 4)
+top_afr_models
+
+```
+
+iv\) Now I need to find what predictors appear commonly at every top model above,
+
+```{r}
+common_terms_afr <- Reduce(
+  intersect,
+  lapply(top_afr_models, function(m) attr(terms(m), "term.labels"))
+)
+
+common_terms_afr
+```
+
+So, \`gestation(mo)\` ,\`litters/year\`and \`weaning(mo)\` are the predictors commonly appearing at every top model.
+
+v\) Next calculating the model average for AFR.
+
+```{r}
+afr_avg <- model.avg(afr_dredge, subset = delta <= 4, fit = TRUE)
+
+summary(afr_avg)
+
+```
+
+vi\) plotting it,
+
+```{r}
+confint(afr_avg)
+
+plot(afr_avg, full = TRUE)
+```
