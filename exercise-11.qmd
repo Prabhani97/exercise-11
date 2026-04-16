@@ -538,7 +538,7 @@ common_terms_afr
 
 So, \`gestation(mo)\` ,\`litters/year\`and \`weaning(mo)\` are the predictors commonly appearing at every top model.
 
-v\) Next calculating the model average for AFR.
+v\) Next part : calculating the model average for AFR
 
 ```{r}
 afr_avg <- model.avg(afr_dredge, subset = delta <= 4, fit = TRUE)
